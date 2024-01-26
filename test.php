@@ -51,7 +51,10 @@ class KMLGenerator
     {
         $result = $this->sql->query("SELECT * FROM `ARB_BASE`");
         while ($row = $result->fetch_assoc()) {
+            echo ("Doing {$row['LOCATION_ID']}..." . PHP_EOL);
+            print_r($row);
             $boundaryData = $this->sql->query("SELECT * FROM `ARB_SEG` WHERE `LOCATION_ID` = '{$row['LOCATION_ID']}' ORDER BY `POINT_SEQ`")->fetch_all(MYSQLI_ASSOC);
+            print_r($boundaryData);
             file_put_contents($this->kmlDirectory . $row['LOCATION_ID'] . '.kml', $this->generateKMLContent($row, $boundaryData));
         }
     }
