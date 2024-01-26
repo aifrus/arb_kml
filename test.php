@@ -60,7 +60,7 @@ class KMLGenerator
     }
 }
 
-$pdo = mysqli_connect('127.0.0.1', 'aifr', 'aifr', 'NASR_INDEX');
+$pdo = mysqli_connect('127.0.0.1', 'aifr', 'aifr', 'NASR_2024-01-25');
 $kmlGenerator = new KMLGenerator($sql, __DIR__ . '/kml_out/');
 $kmlGenerator->generateAndSaveKMLFiles();
 $kmlGenerator->zipKMLFiles();
