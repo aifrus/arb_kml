@@ -9,18 +9,21 @@ class KMLGenerator
         }
     }
 
-    private function generateKMLContent($data)
+    private function generateKMLContent($data, $boundaryData)
     {
         $description = <<<HTML
     <b>Effective Date:</b> {$data['EFF_DATE']}<br/>
     <b>Location ID:</b> {$data['LOCATION_ID']}<br/>
-    <b>Computer ID:</b> {$data['COMPUTER_ID']}<br/>
-    <b>ICAO ID:</b> {$data['ICAO_ID']}<br/>
-    <b>City:</b> {$data['CITY']}<br/>
-    <b>State:</b> {$data['STATE']}<br/>
-    <b>Country Code:</b> {$data['COUNTRY_CODE']}<br/>
-    <b>Cross Reference:</b> {$data['CROSS_REF']}
+    <b>Altitude:</b> {$data['ALTITUDE']}<br/>
+    <b>Type:</b> {$data['TYPE']}<br/>
+    <b>Boundary Point Description:</b> {$data['BNDRY_PT_DESCRIP']}<br/>
+    <b>NAS Description Flag:</b> {$data['NAS_DESCRIP_FLAG']}
     HTML;
+
+        $coordinates = '';
+        foreach ($boundaryData as $point) {
+            $coordinates .= "{$point['LONG_DECIMAL']},{$point['LAT_DECIMAL']} ";
+        }
 
         $kmlContent = <<<KML
     <?xml version="1.0" encoding="UTF-8"?>
@@ -28,18 +31,29 @@ class KMLGenerator
     <Placemark>
         <name>{$data['LOCATION_NAME']}</name>
         <description><![CDATA[{$description}]]></description>
-        <Point>
-            <coordinates>{$data['LONG_DECIMAL']},{$data['LAT_DECIMAL']}</coordinates>
-        </Point>
+        <Polygon>
+            <outerBoundaryIs>
+                <LinearRing>
+                    <coordinates>
+                    {$coordinates}
+                    </coordinates>
+                </LinearRing>
+            </outerBoundaryIs>
+        </Polygon>
     </Placemark>
     </kml>
     KML;
 
         return $kmlContent;
     }
+
     public function generateAndSaveKMLFiles()
     {
-        foreach ($this->sql->query("SELECT * FROM `ARB_BASE`")->fetch_all(MYSQLI_ASSOC) as $row) file_put_contents($this->kmlDirectory . $row['LOCATION_ID'] . '.kml', $this->generateKMLContent($row));
+        $result = $this->sql->query("SELECT * FROM `ARB_BASE`");
+        while ($row = $result->fetch_assoc()) {
+            $boundaryData = $this->sql->query("SELECT * FROM `ARB_SEG` WHERE `LOCATION_ID` = '{$row['LOCATION_ID']}' ORDER BY `POINT_SEQ`")->fetch_all(MYSQLI_ASSOC);
+            file_put_contents($this->kmlDirectory . $row['LOCATION_ID'] . '.kml', $this->generateKMLContent($row, $boundaryData));
+        }
     }
 
     public function zipKMLFiles()
